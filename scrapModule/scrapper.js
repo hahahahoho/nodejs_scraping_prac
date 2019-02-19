@@ -1,6 +1,8 @@
 var request = require("request"); //웹서버에 request요청을 위한 모듈
 var cheerio = require("cheerio"); //불러온 텍스트를 html형태로 load하여 제이쿼리 형태로 사용하게 만들어주는 모듈
 var request = require('sync-request'); //request요청을 동기적으로 사용할 때 사용한다.
+var charset = require('charset');
+var iconv = require('iconv-lite');
 
 // console.log('//////////////');
 // console.log(module.exports); //{}빈객체
@@ -11,6 +13,8 @@ var request = require('sync-request'); //request요청을 동기적으로 사용
 let app = {
     "init" : ()=>{
         this.result = [];
+        this.count = 0;
+        this.url = '';
     },
     "url" : (url)=>{
         if(url!=null&&url!=undefined){
@@ -60,6 +64,25 @@ let app = {
 
         }
         return app;
+    },   
+    "scraping_type_dom" : (target)=>{
+        this.loop_length = 1;
+        let res = request('GET', this.url);
+        const enc = charset(res.headers, res.body);
+        const i_result = iconv.decode(res.body, enc);
+        let $ = cheerio.load(i_result); //html jquery change
+        let obj = {};
+        obj['target'] = [];
+
+        console.log($(target).text());        //문자열 파싱필요
+        if($(target).length == 0){
+            this.check = 'n';
+        }else{
+            obj['target'].push($(target));
+            this.result.push(obj);
+            this.check = 'y';
+        }
+        return app
     },
     "scraping_type_attr" : (arr)=>{ //data eaxmple obj_title >> [{"class" : "title"}, {"class" : "contents"}]
         this.loop_length = arr.length;
@@ -95,15 +118,12 @@ let app = {
                 }
             }
             this.check = 'y';
-
-          
             try{
                 this.result.push(obj);
                 this.count++;
             }catch(err){
                 console.log(err);
             }
-            this.count = arr.length;
 
         }
         //console.log(this.result)
@@ -114,26 +134,37 @@ let app = {
         //console.log(module.exports); // app객체가 만들어지면서 module.exports에는 app을 가르킴
         return app;
     },
-    "type_dom" : ()=>{
-    },
+    //현재페이지 스크래핑 데이터 return
     "read" : ()=>{
         let result = [];
         if(this.check == 'y'){  
             for(let i=this.loop_length; i>0; i--){
                 let obj = {};
                 let filter_trg = this.result[this.result.length-i];
-                //console.log(filter_trg);
-                let key = Object.keys(filter_trg)[0];
-                for(let j = 0 ; j<filter_trg[key].length; j++){
-                    let index = filter_trg[key][j][0].my_index;
-                    //console.log(filter_trg[key][j][0])
-                    obj[key] = filter_trg[key][j].text();
+                if(filter_trg != undefined){
+                    //console.log(filter_trg);
+                    let key = Object.keys(filter_trg)[0];
+                    for(let j = 0 ; j<filter_trg[key].length; j++){
+                        if(filter_trg[key][j][0].my_index != undefined){
+                            let index = filter_trg[key][j][0].my_index;
+                        }
+                        //console.log(filter_trg[key][j][0])
+                        obj[key] = filter_trg[key][j].text();
+                    }
+                    result.push(obj);
                 }
-                result.push(obj);
+                
             }
+        }else{
+            console.log('존재하지 않는 값');
         }
         return result; 
-    } , 
+    },
+    //domtag 데이터 추출 시 정규식을 이용하여 문자열 정렬 후 return
+    "read_regex" : ()=>{
+
+    },
+    //모든 페이지 스크래핑 데이터 return
     "readAll" : ()=>{
         let result = [];
         for(let i = 0; i<this.result.length; i++){
@@ -146,52 +177,7 @@ let app = {
             
             result.push(obj);
         }
-        console.log(result);
         return result;
     }
 };
-
-// request(
-//     {
-//     url : 'url주소 입력',
-//     encoding : null //charset모듈을 통해 인코딩속성을 다시 정의하기 위해 기본값을 null로 처리해준다고 합니다.
-//     }, function(err, res, body){
-//         const enc = charset(res.headers, body); //charset모듈 사용법 입니다. 서버에서 제공하는 header의 인코딩 정보를 확인하고 담습니다.
-//         const i_result = iconv.decode(body, enc); //불러온 웹페이지 html데이터를 해당 웹페이지의 encoding type에 맞게 변환시켜 줍니다.
-//         var $ = cheerio.load(i_result); //text형태의 html을 읽어드려 제이쿼리 형태로 이용할 수 있도록 만들어 줍니다.
-//         console.log($.text());
-//     }
-// )
 module.exports = app;
-
-
-
-
-
-
-
-
-
-
-
-
-// var sendReq = request(
-//     {
-//         url : this.url,
-//         encoding : null
-//     }, (err, res, body)=>{
-        
-
-//         const enc = charset(res.headers, body);
-//         const i_result = iconv.decode(body, enc);
-//         let $ = cheerio.load(i_result);
-
-//         let $title = $('.'+titleName);
-//         let $contents = $('.'+conName);
-//         // console.log($title.text());
-//         // console.log($contents.text());
-//         this.title = $title.text()
-//         this.contents = $contents.text()   
-//         //console.log($.text);
-//     }
-// )

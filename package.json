@@ -9,8 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "charset": "^1.0.1",
     "cheerio": "^1.0.0-rc.2",
+    "iconv-lite": "^0.4.24",
     "request": "^2.88.0",
-    "sync-request": "^6.0.0"
+    "selenium-webdriver": "^4.0.0-alpha.1",
+    "sync-request": "^6.0.0",
+    "voca": "^1.4.0"
   }
 }
